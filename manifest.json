@@ -1,0 +1,22 @@
+{
+  "name": "Gerador de Relatórios de Proativas",
+  "short_name": "Proativas",
+  "description": "Aplicativo para gerar relatórios de atividades proativas da polícia.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f0f2f5",
+  "theme_color": "#003366",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "logo-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
