@@ -71,7 +71,8 @@
         <div class="card-body">
           <div class="mb-3">
             <label for="localSelect" class="form-label"
-              >Local Principal (São Jorge):</label
+              >Local Principal (São Jorge já é automático
+              caso queira outro,digite manualmente):</label
             >
             <select id="localSelect" class="form-select">
               </select>
@@ -91,7 +92,30 @@
 
       <div class="card shadow-sm mb-4">
         <div class="card-header">
-          <h5 class="mb-0">3. Anexe uma Foto</h5>
+          <h5 class="mb-0">3. Selecione o Tipo de Atividade</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label for="atividadeSelect" class="form-label">Tipo de Atividade:</label>
+            <select id="atividadeSelect" class="form-select">
+              </select>
+          </div>
+          <div class="mb-3">
+            <label for="atividadeInput" class="form-label">Atividade Personalizada:</label>
+            <input
+              type="text"
+              id="atividadeInput"
+              class="form-control"
+              placeholder="Selecione uma atividade ou digite aqui"
+              disabled
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">4. Anexe uma Foto</h5>
         </div>
         <div class="card-body text-center">
           <div class="btn-group shadow-sm mb-3">
