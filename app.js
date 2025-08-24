@@ -13,19 +13,23 @@ document.addEventListener("DOMContentLoaded", function () {
     "Cb Junior Barbosa", "Cb Kamila", "Cb Max Douglas", "Cb Nascimento", "Cb Neri", 
     "Cb Odon", "Cb Pinheiro", "Cb Ponte", "Cb Portugal", "Cb Rodrigues", "Cb Rodrigo", 
     "Cb Teixeira", "Cb Thiago Junio", "Cb Tunes", "Sd Jônatas", "Sd Wunder"
-  ];
+  ].sort();
 
   const locaisSaoJorge = [
     "Loquinhas", "São Bento", "Vale da Lua", "Volta da Serra",
     "Parque Nacional", "Centro", "Praça do Coreto", "Mirante do Por do Sol",
     "Mirante do Morro da Baleia",
-  ];
+  ].sort();
+
+  const tiposAtividade = [
+    "PE/PTR", "Visita Escolar", "Visita ao Comércio", "Visita solidária",
+    "Policiamento de Eventos", "Bloqueio", "Abordagem Estática"
+  ].sort();
 
   // =============================================
   // ESTADO DA APLICAÇÃO
   // =============================================
   let currentFile = null;
-  // NOVO: Array para manter a ordem de clique da equipe
   let equipeSelecionada = [];
 
   // =============================================
@@ -36,6 +40,8 @@ document.addEventListener("DOMContentLoaded", function () {
     clearEquipeBtn: document.getElementById("clearEquipeBtn"),
     localSelect: document.getElementById("localSelect"),
     enderecoInput: document.getElementById("enderecoInput"),
+    atividadeSelect: document.getElementById("atividadeSelect"),
+    atividadeInput: document.getElementById("atividadeInput"),
     cameraBtn: document.getElementById("cameraBtn"),
     galleryBtn: document.getElementById("galleryBtn"),
     fileInput: document.getElementById("fileInput"),
@@ -52,6 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function init() {
     populatePoliciais();
     populateLocais();
+    populateAtividades();
     setupEventListeners();
     updateReportPreview();
   }
@@ -76,22 +83,30 @@ document.addEventListener("DOMContentLoaded", function () {
     elements.localSelect.innerHTML += `<option value="outro">Outro (Digitar Manualmente)...</option>`;
   }
 
+  function populateAtividades() {
+    elements.atividadeSelect.innerHTML = `<option value="">Selecione uma atividade...</option>`;
+    tiposAtividade.forEach((atividade) => {
+      elements.atividadeSelect.innerHTML += `<option value="${atividade}">${atividade}</option>`;
+    });
+    elements.atividadeSelect.innerHTML += `<option value="outro">Outro (Digitar Manualmente)...</option>`;
+  }
+
   // =============================================
   // EVENT LISTENERS
   // =============================================
   function setupEventListeners() {
-    // MODIFICADO: O listener agora chama uma função que gerencia a ordem
     elements.policiaisList.addEventListener("change", handleEquipeChange);
     
-    // MODIFICADO: Limpa também o array de equipe ordenada
     elements.clearEquipeBtn.addEventListener("click", () => {
       elements.policiaisList.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-      equipeSelecionada = []; // Limpa a ordem
+      equipeSelecionada = [];
       updateReportPreview();
     });
 
     elements.localSelect.addEventListener("change", handleLocalChange);
     elements.enderecoInput.addEventListener("input", updateReportPreview);
+    elements.atividadeSelect.addEventListener("change", handleAtividadeChange);
+    elements.atividadeInput.addEventListener("input", updateReportPreview);
     elements.cameraBtn.addEventListener("click", () => openFileSelector("environment"));
     elements.galleryBtn.addEventListener("click", () => openFileSelector());
     elements.fileInput.addEventListener("change", handleFileSelect);
@@ -103,17 +118,14 @@ document.addEventListener("DOMContentLoaded", function () {
   // FUNÇÕES PRINCIPAIS E LÓGICA
   // =============================================
   
-  // NOVO: Gerencia a adição e remoção da equipe para manter a ordem de clique
   function handleEquipeChange(e) {
     if (e.target.type === 'checkbox') {
         const nome = e.target.value;
         if (e.target.checked) {
-            // Adiciona o policial à lista se ele for marcado
             if (!equipeSelecionada.includes(nome)) {
                 equipeSelecionada.push(nome);
             }
         } else {
-            // Remove o policial da lista se ele for desmarcado
             equipeSelecionada = equipeSelecionada.filter(p => p !== nome);
         }
         updateReportPreview();
@@ -137,31 +149,59 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     updateReportPreview();
   }
+
+  function handleAtividadeChange() {
+    const selectedValue = elements.atividadeSelect.value;
+    if (selectedValue === "outro") {
+      elements.atividadeInput.value = "";
+      elements.atividadeInput.disabled = false;
+      elements.atividadeInput.placeholder = "Digite o tipo de atividade aqui";
+      elements.atividadeInput.focus();
+    } else if (selectedValue) {
+      elements.atividadeInput.value = selectedValue;
+      elements.atividadeInput.disabled = true;
+    } else {
+      elements.atividadeInput.value = "";
+      elements.atividadeInput.disabled = true;
+      elements.atividadeInput.placeholder = "Selecione uma atividade ou digite aqui";
+    }
+    updateReportPreview();
+  }
   
-  // MODIFICADO: Esta função agora simplesmente retorna a lista ordenada
   function getSelectedEquipe() {
     return equipeSelecionada;
   }
 
   function generateReportText() {
-    const equipe = getSelectedEquipe();
-    const local = elements.localSelect.value === 'outro' ? elements.enderecoInput.value.split(',')[0].trim() : elements.localSelect.value;
-    const endereco = elements.enderecoInput.value;
+  const equipe = getSelectedEquipe();
+  const local = elements.localSelect.value === 'outro' 
+    ? elements.enderecoInput.value.split(',')[0].trim() 
+    : elements.localSelect.value;
+  const endereco = elements.enderecoInput.value;
+  const atividade = elements.atividadeInput.value;
 
-    if (equipe.length === 0 || !endereco) {
-      return "";
-    }
+  if (equipe.length === 0 || !endereco || !atividade) {
+    return "";
+  }
 
-    // MODIFICADO: Usa .join(' e ') para formatar a equipe
-    const equipeText = equipe.join(' e ');
-    
+  const equipeText = equipe.join(' e ');
+  
+  if (atividade === "PE/PTR") {
     return `🚨🚔🚨🚔🚨🚔🚨🚔
-*PE/PTR:* ${local || 'N/A'}
+*${atividade}:* ${local || 'N/A'}
 *Equipe*: ${equipeText}
 *Endereço:* ${endereco}
 
-Foi realizado PE e PTR no local e nas imediações.`;
+Foi realizado ${atividade} no local e nas imediações.`;
+  } else {
+    return `🚨🚔🚨🚔🚨🚔🚨🚔
+*${atividade}:* ${local || 'N/A'}
+*Equipe*: ${equipeText}
+*Endereço:* ${endereco}
+
+Foi feito ${atividade}, bem como PE/PTR no local e nas imediaçoes.`;
   }
+}
 
   function updateReportPreview() {
     const reportText = generateReportText();
@@ -172,10 +212,10 @@ Foi realizado PE e PTR no local e nas imediações.`;
   function validateForm() {
     const equipe = getSelectedEquipe();
     const endereco = elements.enderecoInput.value.trim();
-    const isFormValid = equipe.length > 0 && endereco !== "";
+    const atividade = elements.atividadeInput.value.trim();
+    const isFormValid = equipe.length > 0 && endereco !== "" && atividade !== "";
     
     elements.copyBtn.disabled = !isFormValid;
-    // Para enviar no WhatsApp, precisa da foto também
     elements.whatsappBtn.disabled = !isFormValid || !currentFile;
   }
 
@@ -224,7 +264,7 @@ Foi realizado PE e PTR no local e nas imediações.`;
   async function shareToWhatsApp() {
     const text = elements.reportPreview.value;
     if (!text || !currentFile) {
-        alert("É necessário preencher a equipe, o local e anexar uma foto para compartilhar.");
+        alert("É necessário preencher a equipe, o local, a atividade e anexar uma foto para compartilhar.");
         return;
     }
     
