@@ -259,12 +259,13 @@ body {
   font-size: 1.1rem;
 }
 
+/* CHECKBOXES REDUZIDOS - ALTERAÇÃO PRINCIPAL */
 .form-check-input {
   background-color: white;
   border: 1px solid #ddd;
-  width: 18px;
-  height: 18px;
-  margin-top: 0.2rem;
+  width: 18px !important;
+  height: 18px !important;
+  margin-top: 0.2rem !important;
 }
 
 .form-check-input:checked {
@@ -672,7 +673,7 @@ footer .whatsapp-btn:hover {
     width: auto;
   }
 
-  /* Checkboxes */
+  /* CHECKBOXES EM MOBILE - Ajustados para melhor toque */
   .form-check {
     margin-bottom: 0.8rem;
   }
@@ -828,6 +829,12 @@ footer .whatsapp-btn:hover {
   .d-flex.gap-4 {
     flex-direction: column;
     gap: 0.8rem !important;
+  }
+
+  /* CHECKBOXES EM TELAS PEQUENAS */
+  .form-check-input {
+    width: 18px !important;
+    height: 18px !important;
   }
 
   /* Ajustes específicos para selects */
