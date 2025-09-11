@@ -3,27 +3,74 @@ document.addEventListener("DOMContentLoaded", function () {
   // DADOS DA APLICAÇÃO (Listas)
   // =============================================
   const policiais = [
-    "Subtenente Douglas", "Subtenente Fabiana", "1º Sgt Nilton", "1º Sgt Spíndola",
-    "2° Sgt Elwis", "2° Sgt Nóbriga", "2° Sgt Valdivino", "2° Sgt Wilton", 
-    "3º Sgt Aurélio", "3º Sgt De Castro", "3º Sgt Feitosa", "3º Sgt Gomes Rocha", 
-    "3º Sgt J. Vieira", "3º Sgt Jones", "3º Sgt Menezes", "3º Sgt R. Meira", 
-    "3º Sgt Silvania", "3º Sgt Valadares", "3º Sgt Valverde", "3º Sgt Vinicius", 
-    "Cb Alves", "Cb Antônio Rafael", "Cb Barbosa", "Cb Bezerra", "Cb Carvalho", 
-    "Cb Esser", "Cb Giovani", "Cb Gonzaga", "Cb Guilherme", "Cb J. Freire", 
-    "Cb Junior Barbosa", "Cb Kamila", "Cb Max Douglas", "Cb Nascimento", "Cb Neri", 
-    "Cb Odon", "Cb Pinheiro", "Cb Ponte", "Cb Portugal", "Cb Rodrigues", "Cb Rodrigo", 
-    "Cb Teixeira", "Cb Thiago Junio", "Cb Tunes", "Sd Jônatas", "Sd Wunder"
-  ].sort();
+    "Subtenente Douglas",
+    "Subtenente Fabiana",
+    "1º Sgt Nilton",
+    "1º Sgt Spíndola",
+    "2° Sgt Elwis",
+    "2° Sgt Nóbriga",
+    "2° Sgt Valdivino",
+    "2° Sgt Wilton",
+    "2º Sgt Valverde",
+    "3º Sgt Aurélio",
+    "3º Sgt De Castro",
+    "3º Sgt Feitosa",
+    "3º Sgt Gomes Rocha",
+    "3º Sgt J. Vieira",
+    "3º Sgt Jones",
+    "3º Sgt Menezes",
+    "3º Sgt R. Meira",
+    "3º Sgt Silvania",
+    "3º Sgt Valadares",
+    "3º Sgt Vinicius",
+    "Cb Alves",
+    "Cb Antônio Rafael",
+    "Cb Barbosa",
+    "Cb Bezerra",
+    "Cb Carvalho",
+    "Cb Esser",
+    "Cb Giovani",
+    "Cb Gonzaga",
+    "Cb Guilherme",
+    "Cb J. Freire",
+    "Cb Junior Barbosa",
+    "Cb Kamila",
+    "Cb Max Douglas",
+    "Cb Nascimento",
+    "Cb Neri",
+    "Cb Odon",
+    "Cb Pinheiro",
+    "Cb Ponte",
+    "Cb Portugal",
+    "Cb Rodrigues",
+    "Cb Rodrigo",
+    "Cb Teixeira",
+    "Cb Thiago Junio",
+    "Cb Tunes",
+    "Sd Jônatas",
+    "Sd Wunder",
+  ];
 
   const locaisSaoJorge = [
-    "Loquinhas", "São Bento", "Vale da Lua", "Volta da Serra",
-    "Parque Nacional", "Centro", "Praça do Coreto", "Mirante do Por do Sol",
+    "Loquinhas",
+    "São Bento",
+    "Vale da Lua",
+    "Volta da Serra",
+    "Parque Nacional",
+    "Centro",
+    "Praça do Coreto",
+    "Mirante do Por do Sol",
     "Mirante do Morro da Baleia",
   ].sort();
 
   const tiposAtividade = [
-    "PE/PTR", "Visita Escolar", "Visita ao Comércio", "Visita solidária",
-    "Policiamento de Eventos", "Bloqueio", "Abordagem Estática"
+    "PE/PTR",
+    "Visita Escolar",
+    "Visita ao Comércio",
+    "Visita solidária",
+    "Policiamento de Eventos",
+    "Bloqueio",
+    "Abordagem Estática",
   ].sort();
 
   // =============================================
@@ -62,15 +109,71 @@ document.addEventListener("DOMContentLoaded", function () {
     setupEventListeners();
     updateReportPreview();
   }
+  // Função para ordenar os policiais por categoria e depois alfabeticamente
+  function ordenarPoliciais(lista) {
+    // Definir a ordem das categorias
+    const ordemCategorias = [
+      "Subtenente",
+      "1º Sgt",
+      "2° Sgt",
+      "3º Sgt",
+      "Cb",
+      "Sd",
+    ];
+
+    // Criar um objeto para agrupar por categoria
+    const porCategoria = {};
+
+    // Inicializar arrays para cada categoria
+    ordemCategorias.forEach((categoria) => {
+      porCategoria[categoria] = [];
+    });
+
+    // Agrupar os policiais por categoria
+    lista.forEach((policial) => {
+      for (const categoria of ordemCategorias) {
+        if (policial.startsWith(categoria)) {
+          porCategoria[categoria].push(policial);
+          break;
+        }
+      }
+    });
+
+    // Ordenar cada categoria alfabeticamente
+    ordemCategorias.forEach((categoria) => {
+      porCategoria[categoria].sort();
+    });
+
+    // Concatenar todas as categorias na ordem desejada
+    const resultado = [];
+    ordemCategorias.forEach((categoria) => {
+      resultado.push(...porCategoria[categoria]);
+    });
+
+    return resultado;
+  }
+
+  // Ordenar a lista de policiais
+  const policiaisOrdenados = ordenarPoliciais(policiais);
 
   function populatePoliciais() {
-    policiais.forEach((nome) => {
+    // Limpar a lista atual
+    elements.policiaisList.innerHTML = "";
+
+    // Preencher com a lista ordenada
+    policiaisOrdenados.forEach((nome) => {
       const div = document.createElement("div");
       div.className = "list-group-item";
       div.innerHTML = `
-        <input class="form-check-input me-2" type="checkbox" value="${nome}" id="${nome.replace(/\s/g, '')}">
-        <label class="form-check-label" for="${nome.replace(/\s/g, '')}">${nome}</label>
-      `;
+      <input class="form-check-input me-2" type="checkbox" value="${nome}" id="${nome.replace(
+        /\s/g,
+        ""
+      )}">
+      <label class="form-check-label" for="${nome.replace(
+        /\s/g,
+        ""
+      )}">${nome}</label>
+    `;
       elements.policiaisList.appendChild(div);
     });
   }
@@ -96,9 +199,11 @@ document.addEventListener("DOMContentLoaded", function () {
   // =============================================
   function setupEventListeners() {
     elements.policiaisList.addEventListener("change", handleEquipeChange);
-    
+
     elements.clearEquipeBtn.addEventListener("click", () => {
-      elements.policiaisList.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+      elements.policiaisList
+        .querySelectorAll('input[type="checkbox"]')
+        .forEach((cb) => (cb.checked = false));
       equipeSelecionada = [];
       updateReportPreview();
     });
@@ -107,7 +212,9 @@ document.addEventListener("DOMContentLoaded", function () {
     elements.enderecoInput.addEventListener("input", updateReportPreview);
     elements.atividadeSelect.addEventListener("change", handleAtividadeChange);
     elements.atividadeInput.addEventListener("input", updateReportPreview);
-    elements.cameraBtn.addEventListener("click", () => openFileSelector("environment"));
+    elements.cameraBtn.addEventListener("click", () =>
+      openFileSelector("environment")
+    );
     elements.galleryBtn.addEventListener("click", () => openFileSelector());
     elements.fileInput.addEventListener("change", handleFileSelect);
     elements.copyBtn.addEventListener("click", copyReport);
@@ -117,18 +224,18 @@ document.addEventListener("DOMContentLoaded", function () {
   // =============================================
   // FUNÇÕES PRINCIPAIS E LÓGICA
   // =============================================
-  
+
   function handleEquipeChange(e) {
-    if (e.target.type === 'checkbox') {
-        const nome = e.target.value;
-        if (e.target.checked) {
-            if (!equipeSelecionada.includes(nome)) {
-                equipeSelecionada.push(nome);
-            }
-        } else {
-            equipeSelecionada = equipeSelecionada.filter(p => p !== nome);
+    if (e.target.type === "checkbox") {
+      const nome = e.target.value;
+      if (e.target.checked) {
+        if (!equipeSelecionada.includes(nome)) {
+          equipeSelecionada.push(nome);
         }
-        updateReportPreview();
+      } else {
+        equipeSelecionada = equipeSelecionada.filter((p) => p !== nome);
+      }
+      updateReportPreview();
     }
   }
 
@@ -163,45 +270,47 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
       elements.atividadeInput.value = "";
       elements.atividadeInput.disabled = true;
-      elements.atividadeInput.placeholder = "Selecione uma atividade ou digite aqui";
+      elements.atividadeInput.placeholder =
+        "Selecione uma atividade ou digite aqui";
     }
     updateReportPreview();
   }
-  
+
   function getSelectedEquipe() {
     return equipeSelecionada;
   }
 
   function generateReportText() {
-  const equipe = getSelectedEquipe();
-  const local = elements.localSelect.value === 'outro' 
-    ? elements.enderecoInput.value.split(',')[0].trim() 
-    : elements.localSelect.value;
-  const endereco = elements.enderecoInput.value;
-  const atividade = elements.atividadeInput.value;
+    const equipe = getSelectedEquipe();
+    const local =
+      elements.localSelect.value === "outro"
+        ? elements.enderecoInput.value.split(",")[0].trim()
+        : elements.localSelect.value;
+    const endereco = elements.enderecoInput.value;
+    const atividade = elements.atividadeInput.value;
 
-  if (equipe.length === 0 || !endereco || !atividade) {
-    return "";
-  }
+    if (equipe.length === 0 || !endereco || !atividade) {
+      return "";
+    }
 
-  const equipeText = equipe.join(' e ');
-  
-  if (atividade === "PE/PTR") {
-    return `🚨🚔🚨🚔🚨🚔🚨🚔
-*${atividade}:* ${local || 'N/A'}
+    const equipeText = equipe.join(" e ");
+
+    if (atividade === "PE/PTR") {
+      return `🚨🚔🚨🚔🚨🚔🚨🚔
+*${atividade}:* ${local || "N/A"}
 *Equipe*: ${equipeText}
 *Endereço:* ${endereco}
 
 Foi realizado ${atividade} no local e nas imediações.`;
-  } else {
-    return `🚨🚔🚨🚔🚨🚔🚨🚔
-*${atividade}:* ${local || 'N/A'}
+    } else {
+      return `🚨🚔🚨🚔🚨🚔🚨🚔
+*${atividade}:* ${local || "N/A"}
 *Equipe*: ${equipeText}
 *Endereço:* ${endereco}
 
 Foi feito ${atividade}, bem como PE/PTR no local e nas imediaçoes.`;
+    }
   }
-}
 
   function updateReportPreview() {
     const reportText = generateReportText();
@@ -213,8 +322,9 @@ Foi feito ${atividade}, bem como PE/PTR no local e nas imediaçoes.`;
     const equipe = getSelectedEquipe();
     const endereco = elements.enderecoInput.value.trim();
     const atividade = elements.atividadeInput.value.trim();
-    const isFormValid = equipe.length > 0 && endereco !== "" && atividade !== "";
-    
+    const isFormValid =
+      equipe.length > 0 && endereco !== "" && atividade !== "";
+
     elements.copyBtn.disabled = !isFormValid;
     elements.whatsappBtn.disabled = !isFormValid || !currentFile;
   }
@@ -222,7 +332,7 @@ Foi feito ${atividade}, bem como PE/PTR no local e nas imediaçoes.`;
   // =============================================
   // FUNÇÕES DE AÇÃO (Copiar, WhatsApp, Foto)
   // =============================================
-  
+
   function openFileSelector(captureMode) {
     if (captureMode) {
       elements.fileInput.setAttribute("capture", captureMode);
@@ -236,7 +346,7 @@ Foi feito ${atividade}, bem como PE/PTR no local e nas imediaçoes.`;
     const file = e.target.files[0];
     if (!file) return;
     currentFile = file;
-    
+
     const reader = new FileReader();
     reader.onload = (ev) => {
       elements.preview.src = ev.target.result;
@@ -253,7 +363,8 @@ Foi feito ${atividade}, bem como PE/PTR no local e nas imediaçoes.`;
       await navigator.clipboard.writeText(text);
       elements.copyBtn.innerText = "Copiado!";
       setTimeout(() => {
-        elements.copyBtn.innerHTML = '<i class="bi bi-clipboard-check me-2"></i>Copiar Relatório';
+        elements.copyBtn.innerHTML =
+          '<i class="bi bi-clipboard-check me-2"></i>Copiar Relatório';
       }, 2000);
     } catch (err) {
       console.error("Falha ao copiar:", err);
@@ -264,26 +375,32 @@ Foi feito ${atividade}, bem como PE/PTR no local e nas imediaçoes.`;
   async function shareToWhatsApp() {
     const text = elements.reportPreview.value;
     if (!text || !currentFile) {
-        alert("É necessário preencher a equipe, o local, a atividade e anexar uma foto para compartilhar.");
-        return;
+      alert(
+        "É necessário preencher a equipe, o local, a atividade e anexar uma foto para compartilhar."
+      );
+      return;
     }
-    
+
     try {
-        await navigator.clipboard.writeText(text);
-        
-        if (navigator.canShare && navigator.canShare({ files: [currentFile] })) {
-            await navigator.share({
-                files: [currentFile],
-                title: "Relatório de Proativa",
-            });
-        } else {
-            alert("Seu navegador não suporta o compartilhamento de arquivos. O texto foi copiado. Anexe a imagem manualmente no WhatsApp.");
-        }
+      await navigator.clipboard.writeText(text);
+
+      if (navigator.canShare && navigator.canShare({ files: [currentFile] })) {
+        await navigator.share({
+          files: [currentFile],
+          title: "Relatório de Proativa",
+        });
+      } else {
+        alert(
+          "Seu navegador não suporta o compartilhamento de arquivos. O texto foi copiado. Anexe a imagem manualmente no WhatsApp."
+        );
+      }
     } catch (error) {
-        if (error.name !== "AbortError") {
-            console.error("Erro ao compartilhar:", error);
-            alert("Falha ao compartilhar. O texto foi copiado para a área de transferência.");
-        }
+      if (error.name !== "AbortError") {
+        console.error("Erro ao compartilhar:", error);
+        alert(
+          "Falha ao compartilhar. O texto foi copiado para a área de transferência."
+        );
+      }
     }
   }
 
