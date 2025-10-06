@@ -29,7 +29,7 @@
         <!-- Botão Doc2Text adicionado aqui -->
         <div class="ms-auto">
           <a
-            href="https://d2text.vercel.app/"
+            href="https://react2text.vercel.app/"
             target="_blank"
             class="btn btn-outline-light btn-sm"
             title="Abrir Doc2Text"
@@ -41,43 +41,62 @@
     </nav>
 
     <main class="container my-4">
+      <!-- ALTERAÇÃO 1: Campo de Equipe agora é editável -->
       <div class="card shadow-sm mb-4">
-        <div
-          class="card-header d-flex justify-content-between align-items-center"
-        >
+        <div class="card-header">
           <h5 class="mb-0">1. Selecione a Equipe</h5>
-          <button id="clearEquipeBtn" class="btn btn-sm btn-outline-light">
-            Limpar Seleção
-          </button>
         </div>
         <div class="card-body">
-          <div
-            id="policiaisList"
-            class="list-group list-group-flush border rounded"
-          ></div>
+          <div class="mb-3">
+            <label for="equipeInput" class="form-label">
+              Digite os nomes e graduações da equipe (separados por vírgula caso
+              sejam mais de 3 componentes):
+            </label>
+            <textarea
+              id="equipeInput"
+              class="form-control"
+              rows="3"
+              placeholder="Exemplo: Sub Marino e  CB Loso"
+            ></textarea>
+          </div>
         </div>
       </div>
 
+      <!-- ALTERAÇÃO 2: Local e Endereço separados -->
       <div class="card shadow-sm mb-4">
         <div class="card-header">
           <h5 class="mb-0">2. Defina o Local</h5>
         </div>
         <div class="card-body">
           <div class="mb-3">
-            <label for="localSelect" class="form-label"
-              >Local Principal (São Jorge já é automático caso queira
-              outro,digite manualmente):</label
-            >
+            <label for="localSelect" class="form-label">
+              Local Principal (São Jorge, 14 CIPM, já é automático caso queira
+              outro, digite manualmente):
+            </label>
             <select id="localSelect" class="form-select"></select>
           </div>
+
+          <!-- NOVO: Campo de Local Personalizado -->
+          <div class="mb-3" id="localPersonalizadoDiv" style="display: none">
+            <label for="localPersonalizadoInput" class="form-label">
+              Local Personalizado:
+            </label>
+            <input
+              type="text"
+              id="localPersonalizadoInput"
+              class="form-control"
+              placeholder="Digite o local personalizado"
+            />
+          </div>
+
+          <!-- NOVO: Campo de Endereço independente -->
           <div class="mb-3">
-            <label for="enderecoInput" class="form-label">Endereço:</label>
+            <label for="enderecoInput" class="form-label"> Endereço: </label>
             <input
               type="text"
               id="enderecoInput"
               class="form-control"
-              placeholder="Selecione um local ou digite aqui"
-              disabled
+              placeholder="Digite o endereço completo"
             />
           </div>
         </div>
@@ -149,7 +168,7 @@
         </div>
       </div>
 
-      <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+      <div class="d-grid gap-2 d-md-flex justify-content-md-center mb-3">
         <button id="copyBtn" class="btn btn-success btn-lg shadow-sm" disabled>
           <i class="bi bi-clipboard-check me-2"></i>Copiar Relatório
         </button>
@@ -159,6 +178,13 @@
           disabled
         >
           <i class="bi bi-whatsapp me-2"></i>Enviar via WhatsApp
+        </button>
+      </div>
+
+      <!-- NOVO: Botão para limpar sessão -->
+      <div class="text-center mb-3">
+        <button id="clearSessionBtn" class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-trash"></i> Limpar Todos os Dados
         </button>
       </div>
 

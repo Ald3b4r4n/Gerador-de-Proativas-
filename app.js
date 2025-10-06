@@ -2,55 +2,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // =============================================
   // DADOS DA APLICAÇÃO (Listas)
   // =============================================
-  const policiais = [
-    "Subtenente Douglas",
-    "Subtenente Fabiana",
-    "1º Sgt Nilton",
-    "1º Sgt Spíndola",
-    "2° Sgt Elwis",
-    "2° Sgt Nóbriga",
-    "2° Sgt Valdivino",
-    "2° Sgt Wilton",
-    "2º Sgt Valverde",
-    "3º Sgt Aurélio",
-    "3º Sgt De Castro",
-    "3º Sgt Feitosa",
-    "3º Sgt Gomes Rocha",
-    "3º Sgt J. Vieira",
-    "3º Sgt Jones",
-    "3º Sgt Menezes",
-    "3º Sgt R. Meira",
-    "3º Sgt Silvania",
-    "3º Sgt Valadares",
-    "3º Sgt Vinicius",
-    "Cb Alves",
-    "Cb Antônio Rafael",
-    "Cb Barbosa",
-    "Cb Bezerra",
-    "Cb Carvalho",
-    "Cb Esser",
-    "Cb Giovani",
-    "Cb Gonzaga",
-    "Cb Guilherme",
-    "Cb J. Freire",
-    "Cb Junior Barbosa",
-    "Cb Kamila",
-    "Cb Max Douglas",
-    "Cb Nascimento",
-    "Cb Neri",
-    "Cb Odon",
-    "Cb Pinheiro",
-    "Cb Ponte",
-    "Cb Portugal",
-    "Cb Rodrigues",
-    "Cb Rodrigo",
-    "Cb Teixeira",
-    "Cb Thiago Junio",
-    "Cb Tunes",
-    "Sd Jônatas",
-    "Sd Wunder",
-  ];
-
   const locaisSaoJorge = [
     "Loquinhas",
     "São Bento",
@@ -77,15 +28,15 @@ document.addEventListener("DOMContentLoaded", function () {
   // ESTADO DA APLICAÇÃO
   // =============================================
   let currentFile = null;
-  let equipeSelecionada = [];
 
   // =============================================
   // CACHE DE ELEMENTOS DOM
   // =============================================
   const elements = {
-    policiaisList: document.getElementById("policiaisList"),
-    clearEquipeBtn: document.getElementById("clearEquipeBtn"),
+    equipeInput: document.getElementById("equipeInput"),
     localSelect: document.getElementById("localSelect"),
+    localPersonalizadoDiv: document.getElementById("localPersonalizadoDiv"),
+    localPersonalizadoInput: document.getElementById("localPersonalizadoInput"),
     enderecoInput: document.getElementById("enderecoInput"),
     atividadeSelect: document.getElementById("atividadeSelect"),
     atividadeInput: document.getElementById("atividadeInput"),
@@ -97,85 +48,18 @@ document.addEventListener("DOMContentLoaded", function () {
     reportPreview: document.getElementById("reportPreview"),
     copyBtn: document.getElementById("copyBtn"),
     whatsappBtn: document.getElementById("whatsappBtn"),
+    clearSessionBtn: document.getElementById("clearSessionBtn"),
   };
 
   // =============================================
   // INICIALIZAÇÃO
   // =============================================
   function init() {
-    populatePoliciais();
     populateLocais();
     populateAtividades();
     setupEventListeners();
+    loadSession(); // Carregar sessão salva
     updateReportPreview();
-  }
-  // Função para ordenar os policiais por categoria e depois alfabeticamente
-  function ordenarPoliciais(lista) {
-    // Definir a ordem das categorias
-    const ordemCategorias = [
-      "Subtenente",
-      "1º Sgt",
-      "2° Sgt",
-      "3º Sgt",
-      "Cb",
-      "Sd",
-    ];
-
-    // Criar um objeto para agrupar por categoria
-    const porCategoria = {};
-
-    // Inicializar arrays para cada categoria
-    ordemCategorias.forEach((categoria) => {
-      porCategoria[categoria] = [];
-    });
-
-    // Agrupar os policiais por categoria
-    lista.forEach((policial) => {
-      for (const categoria of ordemCategorias) {
-        if (policial.startsWith(categoria)) {
-          porCategoria[categoria].push(policial);
-          break;
-        }
-      }
-    });
-
-    // Ordenar cada categoria alfabeticamente
-    ordemCategorias.forEach((categoria) => {
-      porCategoria[categoria].sort();
-    });
-
-    // Concatenar todas as categorias na ordem desejada
-    const resultado = [];
-    ordemCategorias.forEach((categoria) => {
-      resultado.push(...porCategoria[categoria]);
-    });
-
-    return resultado;
-  }
-
-  // Ordenar a lista de policiais
-  const policiaisOrdenados = ordenarPoliciais(policiais);
-
-  function populatePoliciais() {
-    // Limpar a lista atual
-    elements.policiaisList.innerHTML = "";
-
-    // Preencher com a lista ordenada
-    policiaisOrdenados.forEach((nome) => {
-      const div = document.createElement("div");
-      div.className = "list-group-item";
-      div.innerHTML = `
-      <input class="form-check-input me-2" type="checkbox" value="${nome}" id="${nome.replace(
-        /\s/g,
-        ""
-      )}">
-      <label class="form-check-label" for="${nome.replace(
-        /\s/g,
-        ""
-      )}">${nome}</label>
-    `;
-      elements.policiaisList.appendChild(div);
-    });
   }
 
   function populateLocais() {
@@ -195,23 +79,96 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // =============================================
+  // SALVAMENTO DE SESSÃO
+  // =============================================
+  function saveSession() {
+    const sessionData = {
+      equipe: elements.equipeInput.value,
+      localSelect: elements.localSelect.value,
+      localPersonalizado: elements.localPersonalizadoInput.value,
+      endereco: elements.enderecoInput.value,
+      atividadeSelect: elements.atividadeSelect.value,
+      atividade: elements.atividadeInput.value,
+    };
+    localStorage.setItem("proativasSession", JSON.stringify(sessionData));
+  }
+
+  function loadSession() {
+    const saved = localStorage.getItem("proativasSession");
+    if (saved) {
+      try {
+        const sessionData = JSON.parse(saved);
+        elements.equipeInput.value = sessionData.equipe || "";
+        elements.localSelect.value = sessionData.localSelect || "";
+        elements.localPersonalizadoInput.value =
+          sessionData.localPersonalizado || "";
+        elements.enderecoInput.value = sessionData.endereco || "";
+        elements.atividadeSelect.value = sessionData.atividadeSelect || "";
+        elements.atividadeInput.value = sessionData.atividade || "";
+
+        // Ajustar visibilidade do campo personalizado
+        if (sessionData.localSelect === "outro") {
+          elements.localPersonalizadoDiv.style.display = "block";
+        }
+
+        // Ajustar estado do campo de atividade
+        if (sessionData.atividadeSelect === "outro") {
+          elements.atividadeInput.disabled = false;
+        } else if (sessionData.atividadeSelect) {
+          elements.atividadeInput.disabled = true;
+        }
+      } catch (e) {
+        console.error("Erro ao carregar sessão:", e);
+      }
+    }
+  }
+
+  function clearSession() {
+    if (confirm("Deseja realmente limpar todos os dados salvos?")) {
+      localStorage.removeItem("proativasSession");
+      elements.equipeInput.value = "";
+      elements.localSelect.value = "";
+      elements.localPersonalizadoInput.value = "";
+      elements.localPersonalizadoDiv.style.display = "none";
+      elements.enderecoInput.value = "";
+      elements.atividadeSelect.value = "";
+      elements.atividadeInput.value = "";
+      elements.atividadeInput.disabled = true;
+      elements.preview.src = "";
+      elements.previewSection.classList.add("d-none");
+      currentFile = null;
+      updateReportPreview();
+    }
+  }
+
+  // =============================================
   // EVENT LISTENERS
   // =============================================
   function setupEventListeners() {
-    elements.policiaisList.addEventListener("change", handleEquipeChange);
-
-    elements.clearEquipeBtn.addEventListener("click", () => {
-      elements.policiaisList
-        .querySelectorAll('input[type="checkbox"]')
-        .forEach((cb) => (cb.checked = false));
-      equipeSelecionada = [];
+    elements.equipeInput.addEventListener("input", () => {
+      saveSession();
       updateReportPreview();
     });
 
     elements.localSelect.addEventListener("change", handleLocalChange);
-    elements.enderecoInput.addEventListener("input", updateReportPreview);
+
+    elements.localPersonalizadoInput.addEventListener("input", () => {
+      saveSession();
+      updateReportPreview();
+    });
+
+    elements.enderecoInput.addEventListener("input", () => {
+      saveSession();
+      updateReportPreview();
+    });
+
     elements.atividadeSelect.addEventListener("change", handleAtividadeChange);
-    elements.atividadeInput.addEventListener("input", updateReportPreview);
+
+    elements.atividadeInput.addEventListener("input", () => {
+      saveSession();
+      updateReportPreview();
+    });
+
     elements.cameraBtn.addEventListener("click", () =>
       openFileSelector("environment")
     );
@@ -219,41 +176,23 @@ document.addEventListener("DOMContentLoaded", function () {
     elements.fileInput.addEventListener("change", handleFileSelect);
     elements.copyBtn.addEventListener("click", copyReport);
     elements.whatsappBtn.addEventListener("click", shareToWhatsApp);
+    elements.clearSessionBtn.addEventListener("click", clearSession);
   }
 
   // =============================================
   // FUNÇÕES PRINCIPAIS E LÓGICA
   // =============================================
 
-  function handleEquipeChange(e) {
-    if (e.target.type === "checkbox") {
-      const nome = e.target.value;
-      if (e.target.checked) {
-        if (!equipeSelecionada.includes(nome)) {
-          equipeSelecionada.push(nome);
-        }
-      } else {
-        equipeSelecionada = equipeSelecionada.filter((p) => p !== nome);
-      }
-      updateReportPreview();
-    }
-  }
-
   function handleLocalChange() {
     const selectedValue = elements.localSelect.value;
     if (selectedValue === "outro") {
-      elements.enderecoInput.value = "";
-      elements.enderecoInput.disabled = false;
-      elements.enderecoInput.placeholder = "Digite o endereço completo aqui";
-      elements.enderecoInput.focus();
-    } else if (selectedValue) {
-      elements.enderecoInput.value = `${selectedValue}, São Jorge`;
-      elements.enderecoInput.disabled = true;
+      elements.localPersonalizadoDiv.style.display = "block";
+      elements.localPersonalizadoInput.focus();
     } else {
-      elements.enderecoInput.value = "";
-      elements.enderecoInput.disabled = true;
-      elements.enderecoInput.placeholder = "Selecione um local ou digite aqui";
+      elements.localPersonalizadoDiv.style.display = "none";
+      elements.localPersonalizadoInput.value = "";
     }
+    saveSession();
     updateReportPreview();
   }
 
@@ -273,39 +212,55 @@ document.addEventListener("DOMContentLoaded", function () {
       elements.atividadeInput.placeholder =
         "Selecione uma atividade ou digite aqui";
     }
+    saveSession();
     updateReportPreview();
   }
 
-  function getSelectedEquipe() {
-    return equipeSelecionada;
+  function getEquipeText() {
+    const equipeValue = elements.equipeInput.value.trim();
+    if (!equipeValue) return "";
+
+    // Dividir por vírgula e limpar espaços
+    const membros = equipeValue
+      .split(",")
+      .map((m) => m.trim())
+      .filter((m) => m);
+
+    if (membros.length === 0) return "";
+    if (membros.length === 1) return membros[0];
+
+    // Juntar com " e " entre os membros
+    return membros.join(" e ");
+  }
+
+  function getLocalText() {
+    if (elements.localSelect.value === "outro") {
+      return elements.localPersonalizadoInput.value.trim();
+    }
+    return elements.localSelect.value;
   }
 
   function generateReportText() {
-    const equipe = getSelectedEquipe();
-    const local =
-      elements.localSelect.value === "outro"
-        ? elements.enderecoInput.value.split(",")[0].trim()
-        : elements.localSelect.value;
-    const endereco = elements.enderecoInput.value;
-    const atividade = elements.atividadeInput.value;
+    const equipe = getEquipeText();
+    const local = getLocalText();
+    const endereco = elements.enderecoInput.value.trim();
+    const atividade = elements.atividadeInput.value.trim();
 
-    if (equipe.length === 0 || !endereco || !atividade) {
+    if (!equipe || !endereco || !atividade) {
       return "";
     }
-
-    const equipeText = equipe.join(" e ");
 
     if (atividade === "PE/PTR") {
       return `🚨🚔🚨🚔🚨🚔🚨🚔
 *${atividade}:* ${local || "N/A"}
-*Equipe*: ${equipeText}
+*Equipe*: ${equipe}
 *Endereço:* ${endereco}
 
 Foi realizado ${atividade} no local e nas imediações.`;
     } else {
       return `🚨🚔🚨🚔🚨🚔🚨🚔
 *${atividade}:* ${local || "N/A"}
-*Equipe*: ${equipeText}
+*Equipe*: ${equipe}
 *Endereço:* ${endereco}
 
 Foi feito ${atividade}, bem como PE/PTR no local e nas imediaçoes.`;
@@ -319,11 +274,10 @@ Foi feito ${atividade}, bem como PE/PTR no local e nas imediaçoes.`;
   }
 
   function validateForm() {
-    const equipe = getSelectedEquipe();
+    const equipe = getEquipeText();
     const endereco = elements.enderecoInput.value.trim();
     const atividade = elements.atividadeInput.value.trim();
-    const isFormValid =
-      equipe.length > 0 && endereco !== "" && atividade !== "";
+    const isFormValid = equipe !== "" && endereco !== "" && atividade !== "";
 
     elements.copyBtn.disabled = !isFormValid;
     elements.whatsappBtn.disabled = !isFormValid || !currentFile;
