@@ -1,36 +1,24 @@
 document.addEventListener("DOMContentLoaded", function () {
   // =============================================
-  // DADOS DA APLICAÇÃO (Listas)
+  // 1. DATA & STATE
   // =============================================
   const locaisSaoJorge = [
-    "Loquinhas",
-    "São Bento",
-    "Vale da Lua",
-    "Volta da Serra",
-    "Parque Nacional",
-    "Centro",
-    "Praça do Coreto",
-    "Mirante do Por do Sol",
-    "Mirante do Morro da Baleia",
+    "Loquinhas", "São Bento", "Vale da Lua", "Volta da Serra",
+    "Parque Nacional", "Centro", "Praça do Coreto",
+    "Mirante do Por do Sol", "Mirante da Janela", "Mirante do Morro da Baleia",
   ].sort();
 
   const tiposAtividade = [
-    "PE/PTR",
-    "Visita Escolar",
-    "Visita ao Comércio",
-    "Visita solidária",
-    "Policiamento de Eventos",
-    "Bloqueio",
+    "PE/PTR", "Visita Escolar", "Visita ao Comércio",
+    "Visita solidária", "Policiamento de Eventos", "Bloqueio",
     "Abordagem Estática",
   ].sort();
 
-  // =============================================
-  // ESTADO DA APLICAÇÃO
-  // =============================================
   let currentFile = null;
+  let gravityEngine = null;
 
   // =============================================
-  // CACHE DE ELEMENTOS DOM
+  // 2. DOM ELEMENTS
   // =============================================
   const elements = {
     equipeInput: document.getElementById("equipeInput"),
@@ -43,321 +31,444 @@ document.addEventListener("DOMContentLoaded", function () {
     cameraBtn: document.getElementById("cameraBtn"),
     galleryBtn: document.getElementById("galleryBtn"),
     fileInput: document.getElementById("fileInput"),
+    uploadArea: document.getElementById("uploadArea"),
     previewSection: document.getElementById("previewSection"),
     preview: document.getElementById("preview"),
+    removePhotoBtn: document.getElementById("removePhotoBtn"),
     reportPreview: document.getElementById("reportPreview"),
     copyBtn: document.getElementById("copyBtn"),
     whatsappBtn: document.getElementById("whatsappBtn"),
     clearSessionBtn: document.getElementById("clearSessionBtn"),
+    homeView: document.getElementById("home-view"),
+    appView: document.getElementById("app-view"),
+    landingThemeToggle: document.getElementById("landingThemeToggle"),
+    appThemeToggle: document.getElementById("appThemeToggle"),
   };
 
   // =============================================
-  // INICIALIZAÇÃO
+  // 3. THEME LOGIC
   // =============================================
-  function init() {
-    populateLocais();
-    populateAtividades();
-    setupEventListeners();
-    loadSession(); // Carregar sessão salva
-    updateReportPreview();
+  function initTheme() {
+    const savedTheme = localStorage.getItem("theme") || "light";
+    document.documentElement.setAttribute("data-theme", savedTheme);
+    updateToggleIcons(savedTheme);
   }
 
-  function populateLocais() {
-    elements.localSelect.innerHTML = `<option value="">Selecione um local...</option>`;
-    locaisSaoJorge.forEach((local) => {
-      elements.localSelect.innerHTML += `<option value="${local}">${local}</option>`;
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute("data-theme");
+    const next = current === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+    updateToggleIcons(next);
+    
+    // Update particles color if needed (optional, metal looks good on both)
+    if (gravityEngine) gravityEngine.updateColors(next);
+  }
+
+  function updateToggleIcons(theme) {
+    const iconClass = theme === "dark" ? "bi-sun-fill" : "bi-moon-stars-fill";
+    [elements.landingThemeToggle, elements.appThemeToggle].forEach(btn => {
+      const i = btn.querySelector("i");
+      i.className = `bi ${iconClass}`;
     });
-    elements.localSelect.innerHTML += `<option value="outro">Outro (Digitar Manualmente)...</option>`;
-  }
-
-  function populateAtividades() {
-    elements.atividadeSelect.innerHTML = `<option value="">Selecione uma atividade...</option>`;
-    tiposAtividade.forEach((atividade) => {
-      elements.atividadeSelect.innerHTML += `<option value="${atividade}">${atividade}</option>`;
-    });
-    elements.atividadeSelect.innerHTML += `<option value="outro">Outro (Digitar Manualmente)...</option>`;
   }
 
   // =============================================
-  // SALVAMENTO DE SESSÃO
+  // 4. GRAVITY ENGINE (METAL SUPERNOVA)
   // =============================================
-  function saveSession() {
-    const sessionData = {
-      equipe: elements.equipeInput.value,
-      localSelect: elements.localSelect.value,
-      localPersonalizado: elements.localPersonalizadoInput.value,
-      endereco: elements.enderecoInput.value,
-      atividadeSelect: elements.atividadeSelect.value,
-      atividade: elements.atividadeInput.value,
-    };
-    localStorage.setItem("proativasSession", JSON.stringify(sessionData));
-  }
+  class GravityEngine {
+    constructor(canvasId) {
+      this.canvas = document.getElementById(canvasId);
+      this.ctx = this.canvas.getContext("2d");
+      this.particles = [];
+      this.width = window.innerWidth;
+      this.height = window.innerHeight;
+      this.running = false;
+      
+      // Physics Parameters
+      this.pointer = { x: this.width / 2, y: this.height / 2 };
+      this.repulsionRadius = 150;
+      this.attractionRadius = 800;
+      this.friction = 0.95;
+      
+      // Mobile Sensors
+      this.sensorMode = false;
 
-  function loadSession() {
-    const saved = localStorage.getItem("proativasSession");
-    if (saved) {
-      try {
-        const sessionData = JSON.parse(saved);
-        elements.equipeInput.value = sessionData.equipe || "";
-        elements.localSelect.value = sessionData.localSelect || "";
-        elements.localPersonalizadoInput.value =
-          sessionData.localPersonalizado || "";
-        elements.enderecoInput.value = sessionData.endereco || "";
-        elements.atividadeSelect.value = sessionData.atividadeSelect || "";
-        elements.atividadeInput.value = sessionData.atividade || "";
+      this.resize();
+      window.addEventListener("resize", () => this.resize());
+      this.setupInteraction();
+    }
 
-        // Ajustar visibilidade do campo personalizado
-        if (sessionData.localSelect === "outro") {
-          elements.localPersonalizadoDiv.style.display = "block";
-        }
+    resize() {
+      this.width = window.innerWidth;
+      this.height = window.innerHeight;
+      this.canvas.width = this.width;
+      this.canvas.height = this.height;
+      this.initParticles();
+    }
 
-        // Ajustar estado do campo de atividade
-        if (sessionData.atividadeSelect === "outro") {
-          elements.atividadeInput.disabled = false;
-        } else if (sessionData.atividadeSelect) {
-          elements.atividadeInput.disabled = true;
-        }
-      } catch (e) {
-        console.error("Erro ao carregar sessão:", e);
+    initParticles() {
+      // MASSIVE galaxy density - insanely large particle count (but performant)
+      const count = Math.min(100000000, (this.width * this.height) / 200);
+      this.particles = [];
+      for (let i = 0; i < count; i++) {
+        this.particles.push(this.createParticle());
       }
     }
-  }
 
-  function clearSession() {
-    if (confirm("Deseja realmente limpar todos os dados salvos?")) {
-      localStorage.removeItem("proativasSession");
-      elements.equipeInput.value = "";
-      elements.localSelect.value = "";
-      elements.localPersonalizadoInput.value = "";
-      elements.localPersonalizadoDiv.style.display = "none";
-      elements.enderecoInput.value = "";
-      elements.atividadeSelect.value = "";
-      elements.atividadeInput.value = "";
-      elements.atividadeInput.disabled = true;
-      elements.preview.src = "";
-      elements.previewSection.classList.add("d-none");
-      currentFile = null;
-      updateReportPreview();
+    createParticle() {
+      // Galaxy Palette: Dark Metal + Shine (Stars)
+      const isStar = Math.random() < 0.15; // 15% are bright stars
+      const colors = isStar 
+        ? ["#FFFFFF", "#E2E8F0", "#38BDF8", "#0EA5E9"] // Bright: White, Slate-200, Sky-400, Sky-500
+        : ["#0F172A", "#1E293B", "#334155", "#475569"]; // Dark: Slate-900 to Slate-600
+      
+      const angle = Math.random() * Math.PI * 2;
+      const maxDimension = Math.sqrt(this.width * this.width + this.height * this.height); // Diagonal
+      const radius = Math.random() * maxDimension * 5.5; // MASSIVE galaxy - 5.5x screen diagonal
+
+      // Calculate initial orbital velocity so galaxy is already rotating
+      const orbitalSpeed = 0.3; // Base speed
+      const tangentVx = -Math.sin(angle) * orbitalSpeed;
+      const tangentVy = Math.cos(angle) * orbitalSpeed;
+
+      return {
+        x: this.width / 2 + Math.cos(angle) * radius,
+        y: this.height / 2 + Math.sin(angle) * radius,
+        vx: tangentVx + (Math.random() - 0.5) * 0.2, // Initial orbital velocity + randomness
+        vy: tangentVy + (Math.random() - 0.5) * 0.2,
+        size: isStar ? Math.random() * 3 + 2 : Math.random() * 5 + 5, // Stars are smaller but bright
+        color: colors[Math.floor(Math.random() * colors.length)],
+        baseRadius: radius, // Remember orbit
+        angle: angle,
+        speed: (Math.random() * 0.002) + 0.001, // Orbital speed
+        isStar: isStar
+      };
+    }
+
+    setupInteraction() {
+      this.mouse = { x: -1000, y: -1000 }; // Off-screen default
+
+      window.addEventListener("mousemove", (e) => {
+        this.mouse.x = e.clientX;
+        this.mouse.y = e.clientY;
+      });
+
+      window.addEventListener("touchmove", (e) => {
+        const t = e.touches[0];
+        this.mouse.x = t.clientX;
+        this.mouse.y = t.clientY;
+      }, { passive: true });
+    }
+
+    update() {
+      if (!this.running) return;
+
+      // Deep space background trail
+      this.ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--bg-page');
+      this.ctx.fillRect(0, 0, this.width, this.height);
+
+      const centerX = this.width / 2;
+      const centerY = this.height / 2;
+      
+      // Mouse Deformer Logic
+      const mouseX = this.mouse.x;
+      const mouseY = this.mouse.y;
+      const hasMouse = mouseX > 0 && mouseY > 0;
+
+      this.particles.forEach(p => {
+        // 1. HARMONIC GALAXY ROTATION (Base State)
+        // Orbit around center
+        const dx = p.x - centerX;
+        const dy = p.y - centerY;
+        const distFromCenter = Math.sqrt(dx * dx + dy * dy);
+        
+        // Tangential force for rotation
+        const orbitAngle = Math.atan2(dy, dx);
+        const rotationForce = 0.05;
+        
+        p.vx += -Math.sin(orbitAngle) * rotationForce * 0.5;
+        p.vy += Math.cos(orbitAngle) * rotationForce * 0.5;
+
+        // Centripetal force (Gravity holding galaxy together)
+        const gravity = 0.02;
+        p.vx -= Math.cos(orbitAngle) * gravity;
+        p.vy -= Math.sin(orbitAngle) * gravity;
+
+        // 2. MOUSE DEFORMER (Distortion Field)
+        if (hasMouse) {
+          const mdx = mouseX - p.x;
+          const mdy = mouseY - p.y;
+          const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+          
+          if (mDist < 300) {
+            // Mouse acts as a heavy mass bending space (smoother)
+            const deformForce = (300 - mDist) / 300 * 0.3; // Reduced from 0.8 to 0.3
+            const mAngle = Math.atan2(mdy, mdx);
+            
+            // Pull towards mouse (Gravity Well)
+            p.vx += Math.cos(mAngle) * deformForce;
+            p.vy += Math.sin(mAngle) * deformForce;
+          }
+        }
+
+        // Friction (Space drag)
+        p.vx *= 0.96;
+        p.vy *= 0.96;
+        
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Screen Wrap (Galaxy boundaries)
+        if (p.x < -100) p.x = this.width + 100;
+        if (p.x > this.width + 100) p.x = -100;
+        if (p.y < -100) p.y = this.height + 100;
+        if (p.y > this.height + 100) p.y = -100;
+
+        // DRAW
+        const velocity = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(p.x, p.y);
+        // Longer trails for stars to simulate light streaks
+        const trailLen = p.isStar ? 4 : 3;
+        this.ctx.lineTo(p.x - p.vx * trailLen, p.y - p.vy * trailLen);
+        
+        this.ctx.strokeStyle = p.color;
+        // Stars are thinner but brighter
+        this.ctx.lineWidth = p.isStar ? Math.min(2, velocity * 2) : Math.min(3, velocity * 1.5);
+        this.ctx.stroke();
+      });
+
+      requestAnimationFrame(() => this.update());
+    }
+
+    start() {
+      if (!this.running) {
+        this.running = true;
+        this.update();
+      }
+    }
+
+    stop() {
+      this.running = false;
     }
   }
 
   // =============================================
-  // EVENT LISTENERS
+  // 5. APP LOGIC
   // =============================================
-  function setupEventListeners() {
-    elements.equipeInput.addEventListener("input", () => {
-      saveSession();
-      updateReportPreview();
+  
+  function init() {
+    initTheme();
+    populateSelects();
+    setupListeners();
+    loadSession();
+    
+    gravityEngine = new GravityEngine("gravityCanvas");
+    
+    handleHashChange();
+    window.addEventListener("hashchange", handleHashChange);
+  }
+
+  function handleHashChange() {
+    const hash = window.location.hash || "#home";
+    if (hash === "#app") {
+      elements.homeView.classList.add("d-none");
+      elements.appView.classList.remove("d-none");
+      gravityEngine.stop();
+    } else {
+      elements.appView.classList.add("d-none");
+      elements.homeView.classList.remove("d-none");
+      gravityEngine.start();
+    }
+  }
+
+  function populateSelects() {
+    let html = '<option value="">Selecione...</option>';
+    locaisSaoJorge.forEach(l => html += `<option value="${l}">${l}</option>`);
+    html += '<option value="outro">Outro (Digitar)...</option>';
+    elements.localSelect.innerHTML = html;
+
+    html = '<option value="">Selecione...</option>';
+    tiposAtividade.forEach(a => html += `<option value="${a}">${a}</option>`);
+    html += '<option value="outro">Outro (Digitar)...</option>';
+    elements.atividadeSelect.innerHTML = html;
+  }
+
+  function setupListeners() {
+    // Theme Toggles
+    elements.landingThemeToggle.addEventListener("click", toggleTheme);
+    elements.appThemeToggle.addEventListener("click", toggleTheme);
+
+    // Inputs
+    [elements.equipeInput, elements.enderecoInput, elements.localPersonalizadoInput, elements.atividadeInput].forEach(el => {
+      el.addEventListener("input", () => { saveSession(); updatePreview(); });
     });
 
-    elements.localSelect.addEventListener("change", handleLocalChange);
-
-    elements.localPersonalizadoInput.addEventListener("input", () => {
+    elements.localSelect.addEventListener("change", (e) => {
+      if (e.target.value === "outro") {
+        elements.localPersonalizadoDiv.classList.remove("d-none");
+      } else {
+        elements.localPersonalizadoDiv.classList.add("d-none");
+        elements.localPersonalizadoInput.value = "";
+      }
       saveSession();
-      updateReportPreview();
+      updatePreview();
     });
 
-    elements.enderecoInput.addEventListener("input", () => {
+    elements.atividadeSelect.addEventListener("change", (e) => {
+      if (e.target.value === "outro") {
+        elements.atividadeInput.disabled = false;
+        elements.atividadeInput.value = "";
+        elements.atividadeInput.focus();
+      } else if (e.target.value) {
+        elements.atividadeInput.disabled = true;
+        elements.atividadeInput.value = e.target.value;
+      } else {
+        elements.atividadeInput.disabled = true;
+        elements.atividadeInput.value = "";
+      }
       saveSession();
-      updateReportPreview();
+      updatePreview();
     });
 
-    elements.atividadeSelect.addEventListener("change", handleAtividadeChange);
-
-    elements.atividadeInput.addEventListener("input", () => {
-      saveSession();
-      updateReportPreview();
+    // Photo
+    elements.uploadArea.addEventListener("click", () => elements.fileInput.click());
+    elements.cameraBtn.addEventListener("click", () => {
+      elements.fileInput.setAttribute("capture", "environment");
+      elements.fileInput.click();
     });
-
-    elements.cameraBtn.addEventListener("click", () =>
-      openFileSelector("environment")
-    );
-    elements.galleryBtn.addEventListener("click", () => openFileSelector());
+    elements.galleryBtn.addEventListener("click", () => {
+      elements.fileInput.removeAttribute("capture");
+      elements.fileInput.click();
+    });
     elements.fileInput.addEventListener("change", handleFileSelect);
+    elements.removePhotoBtn.addEventListener("click", removePhoto);
+
+    // Actions
     elements.copyBtn.addEventListener("click", copyReport);
-    elements.whatsappBtn.addEventListener("click", shareToWhatsApp);
+    elements.whatsappBtn.addEventListener("click", shareWhatsapp);
     elements.clearSessionBtn.addEventListener("click", clearSession);
   }
 
   // =============================================
-  // FUNÇÕES PRINCIPAIS E LÓGICA
+  // 6. CORE LOGIC (REPORT & FILES)
   // =============================================
 
-  function handleLocalChange() {
-    const selectedValue = elements.localSelect.value;
-    if (selectedValue === "outro") {
-      elements.localPersonalizadoDiv.style.display = "block";
-      elements.localPersonalizadoInput.focus();
-    } else {
-      elements.localPersonalizadoDiv.style.display = "none";
-      elements.localPersonalizadoInput.value = "";
-    }
-    saveSession();
-    updateReportPreview();
-  }
-
-  function handleAtividadeChange() {
-    const selectedValue = elements.atividadeSelect.value;
-    if (selectedValue === "outro") {
-      elements.atividadeInput.value = "";
-      elements.atividadeInput.disabled = false;
-      elements.atividadeInput.placeholder = "Digite o tipo de atividade aqui";
-      elements.atividadeInput.focus();
-    } else if (selectedValue) {
-      elements.atividadeInput.value = selectedValue;
-      elements.atividadeInput.disabled = true;
-    } else {
-      elements.atividadeInput.value = "";
-      elements.atividadeInput.disabled = true;
-      elements.atividadeInput.placeholder =
-        "Selecione uma atividade ou digite aqui";
-    }
-    saveSession();
-    updateReportPreview();
-  }
-
-  function getEquipeText() {
-    const equipeValue = elements.equipeInput.value.trim();
-    if (!equipeValue) return "";
-
-    // Dividir por vírgula e limpar espaços
-    const membros = equipeValue
-      .split(",")
-      .map((m) => m.trim())
-      .filter((m) => m);
-
-    if (membros.length === 0) return "";
-    if (membros.length === 1) return membros[0];
-
-    // Juntar com " e " entre os membros
-    return membros.join(" e ");
-  }
-
-  function getLocalText() {
-    if (elements.localSelect.value === "outro") {
-      return elements.localPersonalizadoInput.value.trim();
-    }
-    return elements.localSelect.value;
-  }
-
-  function generateReportText() {
-    const equipe = getEquipeText();
-    const local = getLocalText();
+  function generateReport() {
+    const equipe = elements.equipeInput.value.trim();
+    const local = elements.localSelect.value === "outro" ? elements.localPersonalizadoInput.value : elements.localSelect.value;
     const endereco = elements.enderecoInput.value.trim();
     const atividade = elements.atividadeInput.value.trim();
 
-    if (!equipe || !endereco || !atividade) {
-      return "";
-    }
+    if (!equipe || !endereco || !atividade) return "";
 
-    if (atividade === "PE/PTR") {
-      return `🚨🚔🚨🚔🚨🚔🚨🚔
+    const isPE = atividade === "PE/PTR";
+    const baseText = `🚨🚔🚨🚔🚨🚔🚨🚔
 *${atividade}:* ${local || "N/A"}
 *Equipe*: ${equipe}
 *Endereço:* ${endereco}
 
-Foi realizado ${atividade} no local e nas imediações.`;
-    } else {
-      return `🚨🚔🚨🚔🚨🚔🚨🚔
-*${atividade}:* ${local || "N/A"}
-*Equipe*: ${equipe}
-*Endereço:* ${endereco}
+Foi ${isPE ? "realizado" : "feito"} ${atividade}${isPE ? "" : ", bem como PE/PTR"} no local e nas imediações.`;
 
-Foi feito ${atividade}, bem como PE/PTR no local e nas imediaçoes.`;
-    }
+    return baseText;
   }
 
-  function updateReportPreview() {
-    const reportText = generateReportText();
-    elements.reportPreview.value = reportText;
-    validateForm();
-  }
-
-  function validateForm() {
-    const equipe = getEquipeText();
-    const endereco = elements.enderecoInput.value.trim();
-    const atividade = elements.atividadeInput.value.trim();
-    const isFormValid = equipe !== "" && endereco !== "" && atividade !== "";
-
-    elements.copyBtn.disabled = !isFormValid;
-    elements.whatsappBtn.disabled = !isFormValid || !currentFile;
-  }
-
-  // =============================================
-  // FUNÇÕES DE AÇÃO (Copiar, WhatsApp, Foto)
-  // =============================================
-
-  function openFileSelector(captureMode) {
-    if (captureMode) {
-      elements.fileInput.setAttribute("capture", captureMode);
-    } else {
-      elements.fileInput.removeAttribute("capture");
-    }
-    elements.fileInput.click();
+  function updatePreview() {
+    const text = generateReport();
+    elements.reportPreview.value = text;
+    
+    const isValid = text.length > 0;
+    elements.copyBtn.disabled = !isValid;
+    elements.whatsappBtn.disabled = !isValid || !currentFile;
   }
 
   function handleFileSelect(e) {
     const file = e.target.files[0];
-    if (!file) return;
-    currentFile = file;
+    if (file) {
+      currentFile = file;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        elements.preview.src = ev.target.result;
+        elements.previewSection.classList.remove("d-none");
+        elements.uploadArea.classList.add("d-none");
+        updatePreview();
+      };
+      reader.readAsDataURL(file);
+    }
+  }
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      elements.preview.src = ev.target.result;
-      elements.previewSection.classList.remove("d-none");
+  function removePhoto() {
+    currentFile = null;
+    elements.fileInput.value = "";
+    elements.previewSection.classList.add("d-none");
+    elements.uploadArea.classList.remove("d-none");
+    updatePreview();
+  }
+
+  // =============================================
+  // 7. SESSION
+  // =============================================
+
+  function saveSession() {
+    const data = {
+      equipe: elements.equipeInput.value,
+      localIdx: elements.localSelect.selectedIndex,
+      localCustom: elements.localPersonalizadoInput.value,
+      endereco: elements.enderecoInput.value,
+      ativIdx: elements.atividadeSelect.selectedIndex,
+      ativCustom: elements.atividadeInput.value
     };
-    reader.readAsDataURL(file);
-    validateForm();
+    localStorage.setItem("proativas_v2", JSON.stringify(data));
+  }
+
+  function loadSession() {
+    const saved = localStorage.getItem("proativas_v2");
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        elements.equipeInput.value = data.equipe || "";
+        elements.localSelect.selectedIndex = data.localIdx || 0;
+        elements.localPersonalizadoInput.value = data.localCustom || "";
+        elements.enderecoInput.value = data.endereco || "";
+        elements.atividadeSelect.selectedIndex = data.ativIdx || 0;
+        elements.atividadeInput.value = data.ativCustom || "";
+
+        elements.localSelect.dispatchEvent(new Event("change"));
+        elements.atividadeSelect.dispatchEvent(new Event("change"));
+      } catch (e) { console.error(e); }
+    }
+  }
+
+  function clearSession() {
+    if (confirm("Limpar todos os dados?")) {
+      localStorage.removeItem("proativas_v2");
+      location.reload();
+    }
   }
 
   async function copyReport() {
-    const text = elements.reportPreview.value;
-    if (!text) return;
     try {
-      await navigator.clipboard.writeText(text);
-      elements.copyBtn.innerText = "Copiado!";
-      setTimeout(() => {
-        elements.copyBtn.innerHTML =
-          '<i class="bi bi-clipboard-check me-2"></i>Copiar Relatório';
-      }, 2000);
-    } catch (err) {
-      console.error("Falha ao copiar:", err);
-      alert("Erro ao copiar o texto.");
-    }
+      await navigator.clipboard.writeText(elements.reportPreview.value);
+      alert("Copiado!");
+    } catch (e) { alert("Erro ao copiar"); }
   }
 
-  async function shareToWhatsApp() {
-    const text = elements.reportPreview.value;
-    if (!text || !currentFile) {
-      alert(
-        "É necessário preencher a equipe, o local, a atividade e anexar uma foto para compartilhar."
-      );
-      return;
-    }
-
+  async function shareWhatsapp() {
+    if (!currentFile) return alert("Anexe uma foto!");
     try {
-      await navigator.clipboard.writeText(text);
-
       if (navigator.canShare && navigator.canShare({ files: [currentFile] })) {
         await navigator.share({
           files: [currentFile],
-          title: "Relatório de Proativa",
+          title: "Proativa",
+          text: elements.reportPreview.value
         });
       } else {
-        alert(
-          "Seu navegador não suporta o compartilhamento de arquivos. O texto foi copiado. Anexe a imagem manualmente no WhatsApp."
-        );
+        alert("Compartilhamento não suportado neste navegador.");
       }
-    } catch (error) {
-      if (error.name !== "AbortError") {
-        console.error("Erro ao compartilhar:", error);
-        alert(
-          "Falha ao compartilhar. O texto foi copiado para a área de transferência."
-        );
-      }
-    }
+    } catch (e) { console.log(e); }
   }
 
-  // Inicia a aplicação
   init();
 });
