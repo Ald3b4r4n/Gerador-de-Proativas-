@@ -61,8 +61,10 @@ document.addEventListener("DOMContentLoaded", function () {
     localStorage.setItem("theme", next);
     updateToggleIcons(next);
     
-    // Update particles color if needed (optional, metal looks good on both)
-    if (gravityEngine) gravityEngine.updateColors(next);
+    // Atualizar AnimatedSky com novo tema
+    if (gravityEngine && gravityEngine.setTheme) {
+      gravityEngine.setTheme(next);
+    }
   }
 
   function updateToggleIcons(theme) {
@@ -265,7 +267,15 @@ document.addEventListener("DOMContentLoaded", function () {
     setupListeners();
     loadSession();
     
-    gravityEngine = new GravityEngine("gravityCanvas");
+    // Inicializar AnimatedSky (céu animado modular)
+    const currentTheme = document.documentElement.getAttribute("data-theme") || "light";
+    gravityEngine = new AnimatedSky({
+      canvasId: "gravityCanvas",
+      theme: currentTheme,
+      enableParallax: true,
+      respectReducedMotion: true
+    });
+    gravityEngine.init();
     
     handleHashChange();
     window.addEventListener("hashchange", handleHashChange);
@@ -276,11 +286,16 @@ document.addEventListener("DOMContentLoaded", function () {
     if (hash === "#app") {
       elements.homeView.classList.add("d-none");
       elements.appView.classList.remove("d-none");
-      gravityEngine.stop();
+      // Manter animação rodando no app também
+      if (gravityEngine && gravityEngine.resume) {
+        gravityEngine.resume();
+      }
     } else {
       elements.appView.classList.add("d-none");
       elements.homeView.classList.remove("d-none");
-      gravityEngine.start();
+      if (gravityEngine && gravityEngine.resume) {
+        gravityEngine.resume();
+      }
     }
   }
 

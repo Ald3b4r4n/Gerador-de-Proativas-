@@ -68,6 +68,20 @@ O **Gerador de Proativas** é uma solução web moderna que elimina a necessidad
 - **File API:** Leitura e preview de imagens
 - **Media Capture API:** Acesso direto à câmera via `capture="environment"`
 - **LocalStorage API:** Persistência de sessão
+- **Canvas API:** Animações de background em tempo real
+
+### Sistema de Background Animado
+- **AnimatedSky.js**
+  - Engine de animação canvas com 60 FPS
+  - Modo Dark: Céu noturno com Via Láctea, estrelas cadentes e lua
+  - Modo Light: Céu diurno com sol, nuvens e partículas
+  - Easter Eggs interativos:
+    - 🛸 UAP/OVNI (5% chance - dark mode)
+    - 🎅 Trenó do Papai Noel (3-15% chance - dark mode, maior em dezembro)
+    - 🦅 Pássaros voando (8% chance - light mode)
+    - ✈️ Avião com banner motivacional (4% chance - light mode)
+  - Otimizações: Page Visibility API, detecção de mobile, parallax mouse
+  - Acessibilidade: Respeita `prefers-reduced-motion`
 
 ---
 
@@ -235,6 +249,7 @@ Gerador-de-Proativas-/
 ├── index.html          # Estrutura HTML (Landing + App views)
 ├── app.css             # Estilos (Glassmorphism + Responsividade)
 ├── app.js              # Lógica da aplicação (Vanilla JS)
+├── animated-sky.js     # Engine de animação de background (Canvas)
 ├── sw.js               # Service Worker (PWA offline)
 ├── manifest.json       # Metadados PWA (ícones, cores)
 └── README.md           # Documentação técnica
@@ -371,6 +386,59 @@ try {
 ```
 
 **Aprendizado:** Quirks do iOS Safari exigem atenção especial em apps mobile-first.
+
+---
+
+### 6. **Implementação de Animações Canvas com Performance**
+**Problema:** Criar um sistema de background animado que não impactasse a performance da aplicação principal.
+
+**Solução:**
+```javascript
+class AnimatedSky {
+  constructor(options) {
+    this.fps = 60;
+    this.frameInterval = 1000 / this.fps;
+    this.lastFrameTime = 0;
+    this.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  animate(currentTime = 0) {
+    if (!this.running) return;
+
+    // Controle de FPS
+    const elapsed = currentTime - this.lastFrameTime;
+    if (elapsed < this.frameInterval) {
+      this.animationId = requestAnimationFrame((t) => this.animate(t));
+      return;
+    }
+    this.lastFrameTime = currentTime - (elapsed % this.frameInterval);
+
+    // Renderizar frame
+    this.render();
+    this.animationId = requestAnimationFrame((t) => this.animate(t));
+  }
+
+  // Page Visibility API - pausar quando aba não está visível
+  init() {
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.pause();
+      } else {
+        this.resume();
+      }
+    });
+  }
+}
+```
+
+**Otimizações Implementadas:**
+- ✅ Controle de FPS (60 constante)
+- ✅ Redução de partículas em mobile (50%)
+- ✅ Pausa automática quando aba não está visível (Page Visibility API)
+- ✅ Respeito a `prefers-reduced-motion` para acessibilidade
+- ✅ Detecção de dispositivo móvel para ajustes automáticos
+
+**Aprendizado:** Animações canvas podem ser performáticas se implementadas com controle de frame rate e otimizações baseadas em contexto (mobile, visibilidade, preferências do usuário).
 
 ---
 
